@@ -1,0 +1,13 @@
+# Python
+venv/
+env/
+
+# VS Code
+.vscode/
+
+# Environment variables
+.env
+
+# System files
+.DS_Store
+Thumbs.db

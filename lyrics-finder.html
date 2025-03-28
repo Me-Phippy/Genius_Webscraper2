@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lyrics Finder</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="static/styles.css">
+    <style>
+        :root {
+            /* Light mode colors */
+            --bg-color: #f5f5f5;
+            --text-color: #222222;
+            --card-bg: #ffffff;
+            --primary-color: #ffff64;
+            --primary-hover: #e6e65a;
+            --primary-text: #000000;
+            --secondary-color: #222222;
+            --error-color: #ff5252;
+            --border-color: #e0e0e0;
+            --muted-color: #757575;
+            --lyrics-bg: #f9f9f9;
+            --header-bg: #222222;
+            --header-text: #ffffff;
+        }
+        
+        [data-theme="dark"] {
+            /* Dark mode colors */
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --card-bg: #1e1e1e;
+            --primary-color: #ffff64;
+            --primary-hover: #e6e65a;
+            --primary-text: #000000;
+            --secondary-color: #ffff64;
+            --error-color: #ff5252;
+            --border-color: #333333;
+            --muted-color: #b0b0b0;
+            --lyrics-bg: #2d2d2d;
+            --header-bg: #000000;
+            --header-text: #ffffff;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        .header {
+            background-color: var(--header-bg);
+            color: var(--header-text);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        .theme-switch-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        .theme-switch {
+            display: inline-block;
+            height: 24px;
+            position: relative;
+            width: 48px;
+            margin-left: 10px;
+        }
+        
+        .theme-switch input {
+            display: none;
+        }
+        
+        .slider {
+            background-color: #ccc;
+            bottom: 0;
+            cursor: pointer;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .slider:before {
+            background-color: white;
+            bottom: 4px;
+            content: "";
+            height: 16px;
+            left: 4px;
+            position: absolute;
+            transition: .4s;
+            width: 16px;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(24px);
+            background-color: var(--header-bg);
+        }
+        
+        .theme-label {
+            margin-right: 10px;
+            font-size: 14px;
+            color: var(--header-text);
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .search-container {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: var(--primary-text);
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: background-color 0.3s;
+            font-weight: 600;
+        }
+        
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+        
+        button:disabled {
+            background-color: var(--muted-color);
+            cursor: not-allowed;
+        }
+        
+        .result {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: none;
+            border: 1px solid var(--border-color);
+        }
+        
+        .song-info {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .song-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+            color: var(--text-color);
+        }
+        
+        .song-artist {
+            font-size: 18px;
+            color: var(--muted-color);
+            margin: 5px 0;
+        }
+        
+        .song-album {
+            font-size: 14px;
+            color: var(--muted-color);
+        }
+        
+        .lyrics {
+            white-space: pre-line;
+            line-height: 1.8;
+            font-size: 16px;
+            padding: 15px;
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--lyrics-bg);
+            color: var(--text-color);
+        }
+        
+        .error {
+            color: white;
+            background-color: var(--error-color);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .loading {
+            text-align: center;
+            display: none;
+            margin: 20px 0;
+            color: var(--text-color);
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary-color);
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        [data-theme="dark"] .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid var(--primary-color);
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: transparent;
+            border: none;
+            flex: 1;
+            text-align: center;
+            color: var(--text-color);
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            color: var(--primary-text);
+            background-color: var(--primary-color);
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .info-row {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-row h3 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+            color: var(--muted-color);
+        }
+        
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        .cover-art {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-right: 15px;
+            float: left;
+        }
+        
+        .verse-label {
+            color: var(--muted-color);
+            font-style: italic;
+            margin-top: 10px;
+            margin-bottom: 5px;
+        }
+        
+        @media (max-width: 600px) {
+            .cover-art {
+                float: none;
+                display: block;
+                margin: 0 auto 15px;
+            }
+            
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .theme-switch-container {
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/" class="logo">Lyrics Finder</a>
+        <div class="theme-switch-container">
+            <span class="theme-label">Dark Mode</span>
+            <label class="theme-switch">
+                <input type="checkbox" id="theme-toggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="search-container">
+            <div class="form-group">
+                <label for="artist"><i class="fas fa-user"></i> Artist:</label>
+                <input type="text" id="artist" placeholder="Enter artist name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="song"><i class="fas fa-music"></i> Song Title:</label>
+                <input type="text" id="song" placeholder="Enter song title" required>
+            </div>
+            
+            <button id="search-btn"><i class="fas fa-search"></i> Search Lyrics</button>
+        </div>
+        
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Searching for lyrics...</p>
+        </div>
+        
+        <div id="error" class="error"></div>
+        
+        <div id="result" class="result">
+            <div class="song-info">
+                <img id="cover-art" class="cover-art" src="/placeholder.svg" alt="" style="display:block;">
+                <h2 id="song-title" class="song-title"></h2>
+                <p id="song-artist" class="song-artist"></p>
+                <p id="song-album" class="song-album"></p>
+                <div style="clear: both;"></div>
+            </div>
+            
+            <div class="tabs">
+                <button class="tab active" data-tab="lyrics">Lyrics</button>
+                <button class="tab" data-tab="info">Song Info</button>
+            </div>
+            
+            <div id="lyrics-tab" class="tab-content active">
+                <div id="lyrics" class="lyrics"></div>
+            </div>
+            
+            <div id="info-tab" class="tab-content">
+                <div class="info-row">
+                    <h3>Title</h3>
+                    <p id="info-title"></p>
+                </div>
+                <div class="info-row">
+                    <h3>Artist</h3>
+                    <p id="info-artist"></p>
+                </div>
+                <div class="info-row">
+                    <h3>Album</h3>
+                    <p id="info-album"></p>
+                </div>
+                <div class="info-row">
+                    <h3>Release Date</h3>
+                    <p id="info-release-date"></p>
+                </div>
+                <div class="info-row">
+                    <h3>Producers</h3>
+                    <p id="info-producers"></p>
+                </div>
+                <div class="info-row">
+                    <h3>Writers</h3>
+                    <p id="info-writers"></p>
+                </div>
+                <div class="info-row">
+                    <h3>Source</h3>
+                    <p><a id="genius-link" href="#" target="_blank">View on Genius.com</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="static/script.js"></script>
+</body>
+</html>
